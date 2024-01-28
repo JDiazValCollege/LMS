@@ -1,0 +1,244 @@
+package lms;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+/*
+* Jose Diaz
+* Software Development 1
+* 1/24/24
+* Book class, implements serializable in order to be able to save and load much easier,
+* due to a constant error received when manually editing the text file*/ 
+class Book implements Serializable {
+ private String title;
+ private String author;
+ private int id;
+ 
+ /*Constructors for the book class and serves as the declarations
+ * and storing of the variables title, author and ID*/
+ public Book(String title, String author, int id) {
+ this.title = title;
+ this.author = author;
+ this.id = id;
+ }
+ 
+ public String getTitle() {
+ return title;
+ }
+ public String getAuthor() {
+ return author;
+ }
+ public int getId() {
+ return id;
+ }
+ @Override
+ public String toString() {
+ return String.format("ID: %d, Title: %s, Author: %s", id, title, author);
+ }
+}
+/*
+* Jose Diaz
+* Software Development 1
+* 1/23/24
+LibraryManagementSystem(will refer to it as "LMS" for convenience) class for managing the database*/
+class LibraryManagementSystem {
+ List<Book> availableBooks;
+ private List<Book> unavailableBooks;
+ /*Absolute file path was specified for my computer, should be changed to whoever uses it because it 
+will not be the same.
+ * I tried to do a pre-made file but I have no idea where the file was created.*/
+ private static final String FILE_PATH = "C:\\Users\\Gamer\\Desktop\\cop2805\\library.txt";
+ public LibraryManagementSystem() {
+ availableBooks = new ArrayList<>();
+ unavailableBooks = new ArrayList<>();
+ loadBooks();
+ }
+ /*loadbooks
+ * Load the books from the text file
+ * it is also meant to start the file if it does not exist with the "else" statement that creates two new 
+arrays
+ * catches errors if it cannot find the txt.file
+ * */
+ private void loadBooks() {
+ File file = new File(FILE_PATH);
+ if (file.exists()) {
+ try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+ availableBooks = (List<Book>) ois.readObject();
+ unavailableBooks = (List<Book>) ois.readObject();
+ } catch (IOException | ClassNotFoundException e) {
+ e.printStackTrace();
+ }
+ } else {
+ /*Initialize the lists if the file doesn't exist*/
+ availableBooks = new ArrayList<>();
+ unavailableBooks = new ArrayList<>();
+ }
+ }
+ /*saveBooks
+ * Saves books to the text file for available and unavailable books*/
+ void saveBooks() {
+ try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE_PATH))) {
+ oos.writeObject(availableBooks);
+ oos.writeObject(unavailableBooks);
+ } catch (IOException e) {
+ e.printStackTrace(); // Handle IOException
+ }
+ }
+ /*Search for a book by title, author, or ID*/
+ public void searchBook(String keyword) {
+ List<Book> results = new ArrayList<>();
+ for (Book book : availableBooks) {
+ if (book.getTitle().toLowerCase().contains(keyword.toLowerCase()) ||
+ book.getAuthor().toLowerCase().contains(keyword.toLowerCase()) ||
+ String.valueOf(book.getId()).equals(keyword)) {
+ results.add(book);
+ }
+ }
+ displayBooks(results);
+ }
+ /*reserveBook
+ * Reserve a book by ID,(not necessary, was having fun and added a few extra things from my planning 
+phase to the best of my abilities)
+ * It is meant to remove the book from the list temporarily with just the ID and place it in another 
+text.file
+ * Then you can add the books back by returning them with the ID*/
+ public void reserveBook(int bookId) {
+ Book reservedBook = null;
+ for (Book book : availableBooks) {
+ if (book.getId() == bookId) {
+ reservedBook = book;
+ unavailableBooks.add(reservedBook);
+ availableBooks.remove(reservedBook);
+ saveBooks();
+ System.out.println("Book reserved successfully.");
+ break;
+ }
+ }
+ if (reservedBook == null) {
+ System.out.println("Book not found or already reserved.");
+ }
+ }
+ /*reuturnBook
+ * Return a book by ID which removes the books from the unavailable list and adds it to the available 
+list*/
+ public void returnBook(int bookId) {
+ Book returnedBook = null;
+ for (Book book : unavailableBooks) {
+ if (book.getId() == bookId) {
+ returnedBook = book;
+ availableBooks.add(returnedBook);
+ unavailableBooks.remove(returnedBook);
+ saveBooks();
+ System.out.println("Book returned successfully.");
+ break;
+ }
+ }
+ if (returnedBook == null) {
+ System.out.println("Book not found or already returned.");
+ }
+ }
+ /*addBook
+ * Add a new book to the library, must input title, author and ID.*/
+ public void addBook(String title, String author, int bookId) {
+ Book newBook = new Book(title, author, bookId);
+ availableBooks.add(newBook);
+ saveBooks();
+ System.out.println("Book added to the library.");
+ }
+ /*removeBook
+ * Remove a book from the library by ID, catch error if the ID is invalid or not found*/
+ public void removeBook(int bookId) {
+ Book removedBook = null;
+ for (Book book : availableBooks) {
+ if (book.getId() == bookId) {
+ removedBook = book;
+ availableBooks.remove(removedBook);
+ saveBooks();
+ System.out.println("Book removed from the library.");
+ break;
+ }
+ }
+ if (removedBook == null) {
+ System.out.println("Book not found.");
+ }
+ }
+ /*displayBooks
+ * Display a list of all the books(very important to ensure that it works)*/
+ public void displayBooks(List<Book> books) {
+ if (books.isEmpty()) {
+ System.out.println("No books found.");
+ return;
+ }
+ System.out.println("\nID\tTitle\t\tAuthor");
+ System.out.println("----------------------------------");
+ for (Book book : books) {
+ System.out.println(book.getId() + "\t" + book.getTitle() + "\t\t" + book.getAuthor());
+ }
+ System.out.println();
+ }
+}
+/*
+* Jose Diaz
+* Software Development 1
+* 1/22/24
+* The main class, the purpose of this program is to create a Library Management System to be able to 
+create a database in a file. It can store books and recall them
+* This is the most important part of the program because it handles the users input to get the desired 
+outcome*/
+public class Main {
+ public static void main(String[] args) {
+ LibraryManagementSystem librarySystem = new LibraryManagementSystem();
+ Scanner scanner = new Scanner(System.in);
+ while (true) {
+ System.out.println("1. Search for a book");
+ System.out.println("2. Reserve a book");
+ System.out.println("3. Return a book");
+ System.out.println("4. Add a new book");
+ System.out.println("5. Remove a book");
+ System.out.println("6. Display available books");
+ System.out.println("0. Exit");
+ System.out.print("Enter your choice: ");
+ int choice = scanner.nextInt();
+ scanner.nextLine();
+ switch (choice) {
+ case 1:
+ System.out.print("Enter title, author, or ID to search: ");
+ String keyword = scanner.nextLine();
+ librarySystem.searchBook(keyword);
+ break;
+ case 2:
+ System.out.print("Enter the ID of the book to reserve: ");
+ int reserveId = scanner.nextInt();
+ librarySystem.reserveBook(reserveId);
+ break;
+ case 3:
+ System.out.print("Enter the ID of the book to return: ");
+ int returnId = scanner.nextInt();
+ librarySystem.returnBook(returnId);
+ break;
+ case 4:
+ System.out.print("Enter the title of the new book: ");
+ String title = scanner.nextLine();
+ System.out.print("Enter the author of the new book: ");
+ String author = scanner.nextLine();
+ System.out.print("Enter the ID of the new book: ");
+ int newBookId = scanner.nextInt();
+ librarySystem.addBook(title, author, newBookId);
+ break;
+ case 5:
+ System.out.print("Enter the ID of the book to remove: ");
+ int removeId = scanner.nextInt();
+ librarySystem.removeBook(removeId);
+ break;
+ case 6:
+ librarySystem.displayBooks(librarySystem.availableBooks);
+ break;
+ case 0:
+ librarySystem.saveBooks();
+ System.out.println("Exiting the Library Management System. Thank you for visiting!");
+ scanner.close();
+ System.exit(0);
+ break;
+ default:
+ System.out.println("Invalid choice. Please try again.");
+ break;}}}}
