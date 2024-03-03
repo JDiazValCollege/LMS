@@ -1,0 +1,355 @@
+package lms;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
+/* Jose Diaz
+ * Software Development 1
+ * 2/26/24*/ 
+class Book implements Serializable {
+	//Attributes
+    private String title;
+    private String author;
+    private int barcode;
+    private String status; 
+    private String dueDate; 
+    
+    public Book(String title, String author, int barcode) {
+        this.title = title;
+        this.author = author;
+        this.barcode = barcode;
+        this.status = "Available"; 
+        this.dueDate = "N/A"; 
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public int getBarcode() {
+        return barcode;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public String getDueDate() {
+        return dueDate;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public void setDueDate(String dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%-5d | %-30s | %-20s | %-10s | %-10s", 
+                             barcode, title, author, status, dueDate);
+    }
+}
+
+class LibraryManagementSystem {
+    List<Book> availableBooks;
+    private List<Book> unavailableBooks;
+    private final String FILE_PATH;
+
+    public LibraryManagementSystem(String fileName) {
+        FILE_PATH = fileName;
+        availableBooks = new ArrayList<>();
+        unavailableBooks = new ArrayList<>();
+        loadBooks();
+    }
+    //Loads books from given file
+    private void loadBooks() {
+        File file = new File(FILE_PATH);
+
+        if (file.exists()) {
+            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+                availableBooks = (List<Book>) ois.readObject();
+                unavailableBooks = (List<Book>) ois.readObject();
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    //Saves the data to the given file
+    void saveBooks() {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE_PATH))) {
+            oos.writeObject(availableBooks);
+            oos.writeObject(unavailableBooks);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    //Search function utilizing author, title or barcode
+    public void searchBook(String keyword) {
+        List<Book> results = new ArrayList<>();
+        for (Book book : availableBooks) {
+            if (book.getTitle().toLowerCase().contains(keyword.toLowerCase()) ||
+                    book.getAuthor().toLowerCase().contains(keyword.toLowerCase()) ||
+                    String.valueOf(book.getBarcode()).equals(keyword)) {
+                results.add(book);
+            }
+        }
+        displayBooks(results);
+    }
+    //Lets user reserve a book
+    public void reserveBook(int barcode) {
+        Book reservedBook = null;
+        for (Book book : availableBooks) {
+            if (book.getBarcode() == barcode) {
+                reservedBook = book;
+                unavailableBooks.add(reservedBook);
+                availableBooks.remove(reservedBook);
+                saveBooks();
+                System.out.println("Book reserved successfully.");
+                return;
+            }
+        }
+        if (reservedBook == null) {
+            System.out.println("Book not found or already reserved.");
+        }
+    }
+    //Lets user return a book
+    public void returnBook(int barcode) {
+        Book returnedBook = null;
+        for (Book book : unavailableBooks) {
+            if (book.getBarcode() == barcode) {
+                returnedBook = book;
+                availableBooks.add(returnedBook);
+                unavailableBooks.remove(returnedBook);
+                saveBooks();
+                System.out.println("Book returned successfully.");
+                return;
+            }
+        }
+        if (returnedBook == null) {
+            System.out.println("Book not found or already returned.");
+        }
+    }
+    //Lets user add books and assign them a title, author and barcode
+    public void addBook(String title, String author, int barcode) {
+        Book newBook = new Book(title, author, barcode);
+        availableBooks.add(newBook);
+        saveBooks();
+        System.out.println("Book added to the library.");
+    }
+    //Removes books by BARCODE(formerly ID)
+    public void removeBookByBarcode(int barcode) {
+        Book removedBook = null;
+        for (Book book : availableBooks) {
+            if (book.getBarcode() == barcode) {
+                removedBook = book;
+                availableBooks.remove(removedBook);
+                saveBooks();
+                System.out.println("Book removed from the library.");
+                return;
+            }
+        }
+        if (removedBook == null) {
+            System.out.println("Book not found.");
+        }
+    }
+    //Removes books by TITLE
+    public void removeBookByTitle(String title) {
+        Book removedBook = null;
+        for (Book book : availableBooks) {
+            if (book.getTitle().equalsIgnoreCase(title)) {
+                removedBook = book;
+                availableBooks.remove(removedBook);
+                saveBooks();
+                System.out.println("Book \"" + title + "\" removed from the library.");
+                return;
+            }
+        }
+        if (removedBook == null) {
+            System.out.println("Book \"" + title + "\" not found.");
+        }
+    }
+    //Checks OUT books by TITLE, 4 weeks to return from current day
+    public void checkoutBookByTitle(String title) {
+        Book checkedOutBook = null;
+        for (Book book : availableBooks) {
+            if (book.getTitle().equalsIgnoreCase(title)) {
+                if (unavailableBooks.contains(book)) {
+                    System.out.println("Book \"" + title + "\" is already checked out.");
+                    return;
+                }
+                checkedOutBook = book;
+                unavailableBooks.add(checkedOutBook);
+                availableBooks.remove(checkedOutBook);
+                // Calculate due date (4 weeks from today)
+                LocalDate dueDate = LocalDate.now().plusWeeks(4);
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                String formattedDueDate = dueDate.format(formatter);
+                checkedOutBook.setStatus("Checked Out");
+                checkedOutBook.setDueDate(formattedDueDate);
+                saveBooks();
+                System.out.println("Book \"" + title + "\" checked out successfully. Due Date: " + formattedDueDate);
+                return;
+            }
+        }
+        if (checkedOutBook == null) {
+            System.out.println("Book \"" + title + "\" not found or already checked out.");
+        }
+    }
+    //Checks IN the books by TITLE
+    public void checkinBookByTitle(String title) {
+        Book checkedInBook = null;
+        for (Book book : unavailableBooks) {
+            if (book.getTitle().equalsIgnoreCase(title)) {
+                checkedInBook = book;
+                availableBooks.add(checkedInBook);
+                unavailableBooks.remove(checkedInBook);
+                checkedInBook.setStatus("Checked In");
+                checkedInBook.setDueDate("N/A"); // Setting due date to "null"
+                saveBooks();
+                System.out.println("Book \"" + title + "\" checked in successfully.");
+                return;
+            }
+        }
+        if (checkedInBook == null) {
+            System.out.println("Book \"" + title + "\" not found or already checked in.");
+        }
+    }
+    //Displays books to user
+    public void displayBooks(List<Book> books) {
+        if (books.isEmpty()) {
+            System.out.println("No books found.");
+            return;
+        }
+
+        System.out.println("\nBarcode | Title                          | Author           | Status     | Due Date   |");
+        System.out.println("--------------------------------------------------------------------------------------------");
+        for (Book book : books) {
+            System.out.println(book);
+        }
+        System.out.println();
+    }
+    //Prints database to user
+    public void printDatabase() {
+        System.out.println("Printing the database...");
+        System.out.println("Available Books:");
+        displayBooks(availableBooks);
+        System.out.println("Unavailable Books:");
+        displayBooks(unavailableBooks);
+    }
+    
+    public void addBooksFromFile(String fileName) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length == 3) {
+                    String title = parts[0].trim();
+                    String author = parts[1].trim();
+                    int barcode = Integer.parseInt(parts[2].trim());
+                    addBook(title, author, barcode);
+                } else {
+                    System.out.println("Invalid format for book entry: " + line);
+                }
+            }
+        } catch (IOException | NumberFormatException e) {
+            System.out.println("Error reading file: " + e.getMessage());
+        }
+    }
+}
+
+public class Main {
+	//Main, contains the GUI and the switch cases for utilizing the program
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter the file name to import books: ");
+        String fileName = scanner.nextLine();
+        LibraryManagementSystem librarySystem = new LibraryManagementSystem(fileName);
+
+        while (true) {
+            System.out.println("1. Search for a book");
+            System.out.println("2. Reserve a book");
+            System.out.println("3. Return a book");
+            System.out.println("4. Add a new book");
+            System.out.println("5. Remove a book by barcode");
+            System.out.println("6. Display available books");
+            System.out.println("7. Print database");
+            System.out.println("8. Remove a book by title");
+            System.out.println("9. Check out a book by title");
+            System.out.println("10. Check in a book by title");
+            System.out.println("0. Exit");
+
+            System.out.print("Enter your choice: ");
+            int choice = scanner.nextInt();
+            scanner.nextLine();
+
+            switch (choice) {
+                case 1:
+                    System.out.print("Enter title, author, or barcode to search: ");
+                    String keyword = scanner.nextLine();
+                    librarySystem.searchBook(keyword);
+                    break;
+                case 2:
+                    System.out.print("Enter the barcode of the book to reserve: ");
+                    int reserveBarcode = scanner.nextInt();
+                    librarySystem.reserveBook(reserveBarcode);
+                    break;
+                case 3:
+                    System.out.print("Enter the barcode of the book to return: ");
+                    int returnBarcode = scanner.nextInt();
+                    librarySystem.returnBook(returnBarcode);
+                    break;
+                case 4:
+                    System.out.print("Enter the title of the new book: ");
+                    String title = scanner.nextLine();
+                    System.out.print("Enter the author of the new book: ");
+                    String author = scanner.nextLine();
+                    System.out.print("Enter the barcode of the new book: ");
+                    int newBarcode = scanner.nextInt();
+                    librarySystem.addBook(title, author, newBarcode);
+                    break;
+                case 5:
+                    System.out.print("Enter the barcode of the book to remove: ");
+                    int removeBarcode = scanner.nextInt();
+                    librarySystem.removeBookByBarcode(removeBarcode);
+                    break;
+                case 6:
+                    librarySystem.displayBooks(librarySystem.availableBooks);
+                    break;
+                case 7:
+                    librarySystem.printDatabase();
+                    break;
+                case 8:
+                    System.out.print("Enter the title of the book to remove: ");
+                    String removeTitle = scanner.nextLine();
+                    librarySystem.removeBookByTitle(removeTitle);
+                    break;
+                case 9:
+                    System.out.print("Enter the title of the book to check out: ");
+                    String checkoutTitle = scanner.nextLine();
+                    librarySystem.checkoutBookByTitle(checkoutTitle);
+                    break;
+                case 10:
+                    System.out.print("Enter the title of the book to check in: ");
+                    String checkinTitle = scanner.nextLine();
+                    librarySystem.checkinBookByTitle(checkinTitle);
+                    break;
+                case 0:
+                    librarySystem.saveBooks();
+                    System.out.println("Exiting the Library Management System. Thank you for visiting!");
+                    scanner.close();
+                    System.exit(0);
+                    break;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+                    break;}}}}
