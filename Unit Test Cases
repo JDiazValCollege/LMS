@@ -1,0 +1,70 @@
+package test;
+
+import org.junit.Test;
+import static org.junit.Assert.*;
+
+import java.util.Iterator;
+
+public class test {
+
+    private static final String FILENAME = "test_books.txt";
+
+    @Test
+    public void testAddBook() {
+        LibraryManagementSystem librarySystem = new LibraryManagementSystem(FILENAME);
+        librarySystem.addBook("Title1", "Author1", 1);
+        assertTrue(librarySystem.availableBooks.stream().anyMatch(book -> book.getTitle().equals("Title1")));
+    }
+
+    @Test
+    public void testRemoveBookByBarcode() {
+        LibraryManagementSystem librarySystem = new LibraryManagementSystem(FILENAME);
+        librarySystem.addBook("Title1", "Author1", 1);
+        librarySystem.addBook("Title2", "Author2", 2); // Add a book with barcode 2
+
+        // Print the list of available books before removal
+        System.out.println("Available Books before removal:");
+        librarySystem.displayBooks(librarySystem.availableBooks);
+
+        librarySystem.removeBookByBarcode(2); // Remove the book with barcode 2
+
+        // Print the list of available books after removal
+        System.out.println("Available Books after removal:");
+        librarySystem.displayBooks(librarySystem.availableBooks);
+
+        assertFalse(librarySystem.availableBooks.stream().anyMatch(book -> book.getTitle().equals("Title2")));
+    }
+
+    @Test
+    public void testRemoveBookByTitle() {
+        LibraryManagementSystem librarySystem = new LibraryManagementSystem(FILENAME);
+        librarySystem.addBook("Title2", "Author2", 2); // Add barcode 2
+        librarySystem.removeBookByTitle("Title2");
+        assertFalse(librarySystem.availableBooks.stream().anyMatch(book -> book.getTitle().equals("Title2")));
+    }
+
+    @Test
+    public void testCheckoutBookByTitle() {
+        // Initialize the library system with test data
+        LibraryManagementSystem librarySystem = new LibraryManagementSystem(FILENAME);
+        librarySystem.addBook("Title3", "Author3", 3);
+
+        // Attempt to check out the book
+        librarySystem.checkoutBookByTitle("Title3");
+
+        // Retrieve the checked out book from the system
+        Book checkedOutBook = librarySystem.findBookByTitle("Title3");
+
+        // Check if the checked out book object is not null
+        assertNotNull("Checked out book is null", checkedOutBook);
+    }
+
+    @Test
+    public void testCheckinBookByTitle() {
+        LibraryManagementSystem librarySystem = new LibraryManagementSystem(FILENAME);
+        librarySystem.addBook("Title4", "Author4", 4);
+        librarySystem.checkoutBookByTitle("Title4");
+        librarySystem.checkinBookByTitle("Title4");
+        assertNull(librarySystem.availableBooks.stream().filter(book -> book.getTitle().equals("Title4")).findFirst().orElse(null).getDueDate());
+    }
+}
