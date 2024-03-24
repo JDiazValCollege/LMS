@@ -1,0 +1,156 @@
+package application;
+/*
+Author: Jose Diaz
+Course: Software Development 1
+Date: 3/15/24
+
+Class Name: Book
+
+Explanation:
+This class contains the attributes: title, author, barcode, status, and due date. It provides methods to access and modify these attributes, as well as a toString method for displaying the book information.
+*/
+
+import java.io.Serializable;
+
+public class Book implements Serializable {
+
+    private String title;
+    private String author;
+    private int barcode;
+    private String status;
+    private String dueDate;
+
+    /*
+    Constructor: Book
+
+    Purpose:
+    Initializes a Book object with the provided attributes.
+
+    Arguments:
+    title: A String representing the title of the book.
+    author: A String representing the author of the book.
+    barcode: An integer representing the barcode of the book.
+    status: A String representing the status of the book (e.g., Available, Reserved).
+    dueDate: A String representing the due date of the book.
+    */
+
+    public Book(String title, String author, int barcode, String status, String dueDate) {
+        this.title = title;
+        this.author = author;
+        this.barcode = barcode;
+        this.status = status;
+        this.dueDate = dueDate;
+    }
+
+    /*
+    Method Name: getTitle
+
+    Purpose:
+    Gets the title of the book.
+
+    Return Value:
+    A String representing the title of the book.
+    */
+
+    public String getTitle() {
+        return title;
+    }
+
+    /*
+    Method Name: getAuthor
+
+    Purpose:
+    Gets the author of the book.
+
+    Return Value:
+    A String representing the author of the book.
+    */
+
+    public String getAuthor() {
+        return author;
+    }
+
+    /*
+    Method Name: getBarcode
+
+    Purpose:
+    Gets the barcode of the book.
+
+    Return Value:
+    An integer representing the barcode of the book.
+    */
+
+    public int getBarcode() {
+        return barcode;
+    }
+
+    /*
+    Method Name: getStatus
+
+    Purpose:
+    Gets the status of the book.
+
+    Return Value:
+    A String representing the status of the book.
+    */
+
+    public String getStatus() {
+        return status;
+    }
+
+    /*
+    Method Name: getDueDate
+
+    Purpose:
+    Gets the due date of the book.
+
+    Return Value:
+    A String representing the due date of the book.
+    */
+
+    public String getDueDate() {
+        return dueDate;
+    }
+
+    /*
+    Method Name: setStatus
+
+    Purpose:
+    Sets the status of the book.
+
+    Arguments:
+    status: A String representing the new status of the book.
+    */
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    /*
+    Method Name: setDueDate
+
+    Purpose:
+    Sets the due date of the book.
+
+    Arguments:
+    dueDate: A String representing the new due date of the book.
+    */
+
+    public void setDueDate(String dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    /*
+    Method Name: toString
+
+    Purpose:
+    Returns a String representation of the book.
+
+    Return Value:
+    A formatted String representing the book information.
+    */
+
+    @Override
+    public String toString() {
+        return String.format("%-5d | %-30s | %-20s | %-10s | %-10s",
+                barcode, title, author, status, dueDate);}}
