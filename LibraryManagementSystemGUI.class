@@ -1,0 +1,280 @@
+package application;
+/*
+Author: Jose Diaz
+Course: Software Development 1
+Date: 3/14/24
+
+Class Name: LibraryManagementSystemGUI
+
+Explanation:
+This class represents the graphical user interface (GUI.)
+*/
+
+import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import java.util.Optional;
+
+public class LibraryManagementSystemGUI extends Application {
+
+    private LibraryManagementSystem librarySystem;
+    private TextArea consoleOutput;
+    private boolean fileNameEntered = false;
+    private String fileName;
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+
+    @Override
+    public void start(Stage primaryStage) {
+        primaryStage.setTitle("Library Management System");
+
+        GridPane grid = new GridPane();
+        grid.setAlignment(Pos.CENTER);
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(25, 25, 25, 25));
+
+        // Text fields
+        TextField fileNameField = new TextField();
+        fileNameField.setPromptText("Enter file name");
+
+        // Console output area
+        consoleOutput = new TextArea();
+        consoleOutput.setEditable(false);
+        consoleOutput.setPrefRowCount(10);
+
+        VBox consoleBox = new VBox(10, new Label("Console Output"), consoleOutput);
+
+        // Buttons
+        Button openFileButton = new Button("Open File");
+        openFileButton.setOnAction(event -> {
+            if (!fileNameEntered) {
+                fileName = fileNameField.getText();
+                System.out.println("File name entered: " + fileName); // Debugging statement
+                if (fileName.isEmpty()) {
+                    displayAlert("Error", "Please enter a file name.");
+                    return;
+                }
+                fileNameEntered = true;
+                initializeLibrarySystem(fileName);
+                System.out.println("Library system initialized with file: " + fileName); // Debugging statement
+            }
+            consoleOutput.clear();
+            printDatabase();
+        });
+
+        Button removeBarcodeButton = new Button("Remove by Barcode");
+        removeBarcodeButton.setOnAction(event -> {
+            String barcodeText = getInput("Enter barcode to remove:");
+            if (barcodeText != null && !barcodeText.isEmpty()) {
+                int barcode = Integer.parseInt(barcodeText);
+                removeBookByBarcode(barcode);
+                printDatabase();
+            }
+        });
+
+        Button removeTitleButton = new Button("Remove by Title");
+        removeTitleButton.setOnAction(event -> {
+            String title = getInput("Enter title to remove:");
+            if (title != null && !title.isEmpty()) {
+                removeBookByTitle(title);
+                printDatabase();
+            }
+        });
+
+        Button checkoutButton = new Button("Check Out");
+        checkoutButton.setOnAction(event -> {
+            String title = getInput("Enter title to check out:");
+            if (title != null && !title.isEmpty()) {
+                checkoutBookByTitle(title);
+                printDatabase();
+            }
+        });
+
+        Button checkinButton = new Button("Check In");
+        checkinButton.setOnAction(event -> {
+            String title = getInput("Enter title to check in:");
+            if (title != null && !title.isEmpty()) {
+                checkinBookByTitle(title);
+                printDatabase();
+            }
+        });
+
+        Button exitButton = new Button("Exit");
+        exitButton.setOnAction(event -> primaryStage.close());
+
+        // Add components to the grid
+        grid.add(fileNameField, 0, 0);
+        grid.add(openFileButton, 1, 0);
+        grid.add(consoleBox, 0, 1, 2, 1);
+        grid.add(removeBarcodeButton, 0, 2);
+        grid.add(removeTitleButton, 1, 2);
+        grid.add(checkoutButton, 0, 3);
+        grid.add(checkinButton, 1, 3);
+        grid.add(exitButton, 0, 4, 2, 1);
+
+        Scene scene = new Scene(grid, 600, 400);
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    /*
+    Method Name: initializeLibrarySystem
+
+    Purpose:
+    Initializes the library system with the given file name.
+
+    Arguments:
+    fileName: A String representing the name of the file to initialize the library system with.
+    */
+
+    private void initializeLibrarySystem(String fileName) {
+        librarySystem = new LibraryManagementSystem(fileName);
+    }
+
+    /*
+    Method Name: removeBookByBarcode
+
+    Purpose:
+    Removes a book from the library system by its barcode.
+
+    Arguments:
+    barcode: An integer representing the barcode of the book to be removed.
+    */
+
+    private void removeBookByBarcode(int barcode) {
+        if (librarySystem.removeBookByBarcode(barcode)) {
+            displayMessage("Book with barcode " + barcode + " removed successfully.");
+        } else {
+            displayAlert("Error", "Book with barcode " + barcode + " not found.");
+        }}
+
+    /*
+    Method Name: removeBookByTitle
+
+    Purpose:
+    Removes a book from the library system by its title.
+
+    Arguments:
+    title: A String representing the title of the book to be removed.
+    */
+
+    private void removeBookByTitle(String title) {
+        if (librarySystem.removeBookByTitle(title)) {
+            displayMessage("Book with title \"" + title + "\" removed successfully.");
+        } else {
+            displayAlert("Error", "Book with title \"" + title + "\" not found.");
+        }}
+
+    /*
+    Method Name: checkoutBookByTitle
+
+    Purpose:
+    Checks out a book from the library system by its title.
+
+    Arguments:
+    title: A String representing the title of the book to be checked out.
+    */
+
+    private void checkoutBookByTitle(String title) {
+        if (librarySystem.checkoutBookByTitle(title)) {
+            displayMessage("Book \"" + title + "\" checked out successfully.");
+        } else {
+            displayAlert("Error", "Book \"" + title + "\" not found or already checked out.");
+        }}
+
+    /*
+    Method Name: checkinBookByTitle
+
+    Purpose:
+    Checks in a book to the library system by its title.
+
+    Arguments:
+    title: A String representing the title of the book to be checked in.
+    */
+
+    private void checkinBookByTitle(String title) {
+        if (librarySystem.checkinBookByTitle(title)) {
+            displayMessage("Book \"" + title + "\" checked in successfully.");
+        } else {
+            displayAlert("Error", "Book \"" + title + "\" not found or already checked in.");
+        }}
+
+    /*
+    Method Name: printDatabase
+
+    Purpose:
+    Prints the available and unavailable books in the library system to the console output.
+    */
+
+    private void printDatabase() {
+        consoleOutput.clear();
+        consoleOutput.appendText("Printing the database...\n");
+        consoleOutput.appendText(librarySystem.getAvailableBooksAsString() + "\n");
+        consoleOutput.appendText(librarySystem.getUnavailableBooksAsString() + "\n");
+    }
+
+    /*
+    Method Name: getInput
+
+    Purpose:
+    Displays a dialog box to get user input.
+
+    Arguments:
+    prompt: A String representing the prompt message to display.
+
+    Return Value:
+    A String containing the user input, or null if no input is provided.
+    */
+
+    private String getInput(String prompt) {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Input");
+        dialog.setHeaderText(null);
+        dialog.setContentText(prompt);
+        Optional<String> result = dialog.showAndWait();
+        return result.orElse(null);
+    }
+
+    /*
+    Method Name: displayAlert
+
+    Purpose:
+    Displays an alert dialog with the specified title and message.
+
+    Arguments:
+    title: A String representing the title of the alert dialog.
+    message: A String representing the message to display in the alert dialog.
+    */
+
+    private void displayAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    /*
+    Method Name: displayMessage
+
+    Purpose:
+    Displays an informational message dialog with the specified message.
+
+    Arguments:
+    message: A String representing the message to display in the dialog.
+    */
+
+    private void displayMessage(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Message");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();}}
