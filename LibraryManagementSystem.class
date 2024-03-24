@@ -1,0 +1,387 @@
+package application;
+/*
+Author: Jose Diaz
+Course: Software Development 1
+Date: 3/15/24
+
+Class Name: LibraryManagementSystem
+
+Explanation:
+This class represents a Library Management System. It handles the management of available and unavailable books,
+including the operations: loading and saving books from/to a file, searching for books, reserving, returning, adding, removing, checking out, and checking in books.
+*/
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class LibraryManagementSystem implements Serializable {
+
+    private List<Book> availableBooks;
+    private List<Book> unavailableBooks;
+    private final String FILE_PATH;
+
+    public LibraryManagementSystem(String fileName) {
+        FILE_PATH = fileName;
+        availableBooks = new ArrayList<>();
+        unavailableBooks = new ArrayList<>();
+        loadBooks(); // Load books from file when the object is created
+    }
+
+    /*
+    Method Name: loadBooks
+
+    Purpose:
+    Loads books from the file specified by FILE_PATH and populates the availableBooks and unavailableBooks lists.
+    */
+
+    public void loadBooks() {
+        try (BufferedReader br = new BufferedReader(new FileReader(FILE_PATH))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length == 5) {
+                    String title = parts[0];
+                    String author = parts[1];
+                    int barcode = Integer.parseInt(parts[2]);
+                    String status = parts[3];
+                    String dueDate = parts[4];
+                    Book book = new Book(title, author, barcode, status, dueDate);
+                    if ("Available".equalsIgnoreCase(status)) {
+                        availableBooks.add(book);
+                    } else {
+                        unavailableBooks.add(book);
+                    }
+                } else {
+                    displayAlert("Error", "Invalid data format in file: " + FILE_PATH);
+                    return;
+                }
+            }
+        } catch (FileNotFoundException e) {
+            // If file not found, proceed with empty lists
+        } catch (IOException e) {
+            System.err.println("Error reading from file: " + e.getMessage());
+        } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+            // Handle invalid data format without printing error message
+        }
+    }
+
+    /*
+    Method Name: saveBooks
+
+    Purpose:
+    Saves the books from availableBooks and unavailableBooks lists to the file specified by FILE_PATH.
+    */
+
+    private void saveBooks() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+            for (Book book : availableBooks) {
+                writer.write(bookToFileString(book));
+                writer.newLine();
+            }
+            for (Book book : unavailableBooks) {
+                writer.write(bookToFileString(book));
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            System.err.println("Error saving to file: " + e.getMessage());}}
+
+    /*
+    Method Name: bookToFileString
+
+    Purpose:
+    Converts a Book object to a String representation to be written to the file.
+
+    Arguments:
+    book: The Book object to be converted.
+
+    Return Value:
+    A String representation of the Book object for file writing.
+    */
+
+    private String bookToFileString(Book book) {
+        return String.format("%s,%s,%d,%s,%s",
+                book.getTitle(), book.getAuthor(), book.getBarcode(), book.getStatus(), book.getDueDate());
+    }
+
+    /*
+    Method Name: searchBook
+
+    Purpose:
+    Searches for a book by a keyword in its title, author, or barcode.
+
+    Arguments:
+    keyword: A String representing the keyword to search for.
+
+    Return Value:
+    true if at least one book matching the keyword is found; false otherwise.
+    */
+
+    public boolean searchBook(String keyword) {
+        List<Book> results = new ArrayList<>();
+        for (Book book : availableBooks) {
+            if (book.getTitle().toLowerCase().contains(keyword.toLowerCase()) ||
+                    book.getAuthor().toLowerCase().contains(keyword.toLowerCase()) ||
+                    String.valueOf(book.getBarcode()).equals(keyword)) {
+                results.add(book);}}
+        
+        displayBooks(results);
+        return !results.isEmpty();}
+
+    /*
+    Method Name: reserveBook
+
+    Purpose:
+    Reserves a book by its barcode.
+
+    Arguments:
+    barcode: An integer representing the barcode of the book to reserve.
+
+    Return Value:
+    true if the book is successfully reserved; false otherwise.
+    */
+
+    public boolean reserveBook(int barcode) {
+        for (Book book : availableBooks) {
+            if (book.getBarcode() == barcode) {
+                unavailableBooks.add(book);
+                availableBooks.remove(book);
+                saveBooks();
+                System.out.println("Book reserved successfully.");
+                return true;}}
+        
+        System.out.println("Book not found or already reserved.");
+        return false;}
+
+    /*
+    Method Name: returnBook
+
+    Purpose:
+    Returns a book by its barcode.
+
+    Arguments:
+    barcode: An integer representing the barcode of the book to return.
+
+    Return Value:
+    true if the book is successfully returned; false otherwise.
+    */
+
+    public boolean returnBook(int barcode) {
+        for (Book book : unavailableBooks) {
+            if (book.getBarcode() == barcode) {
+                availableBooks.add(book);
+                unavailableBooks.remove(book);
+                saveBooks();
+                System.out.println("Book returned successfully.");
+                return true;
+            }
+        }
+        System.out.println("Book not found or already returned.");
+        return false;}
+
+    /*
+    Method Name: addBook
+
+    Purpose:
+    Adds a new book to the library.
+
+    Arguments:
+    title: A String representing the title of the book.
+    author: A String representing the author of the book.
+    barcode: An integer representing the barcode of the book to add.
+
+    Return Value:
+    true if the book is successfully added; false otherwise.
+    */
+
+    public boolean addBook(String title, String author, int barcode) {
+        Book newBook = new Book(title, author, barcode, "Available", "N/A");
+        boolean added = availableBooks.add(newBook);
+        if (added) {
+            saveBooks();
+            System.out.println("Book added to the library.");
+        } else {
+            System.out.println("Failed to add book to the library.");
+        }
+        return added;}
+
+    /*
+    Method Name: removeBookByBarcode
+
+    Purpose:
+    Removes a book from the library by its barcode.
+
+    Arguments:
+    barcode: An integer representing the barcode of the book to remove.
+
+    Return Value:
+    true if the book is successfully removed; false otherwise.
+    */
+
+    public boolean removeBookByBarcode(int barcode) {
+        for (Book book : availableBooks) {
+            if (book.getBarcode() == barcode) {
+                boolean removed = availableBooks.remove(book);
+                if (removed) {
+                    saveBooks();
+                    System.out.println("Book removed from the library.");
+                } else {
+                    System.out.println("Failed to remove book from the library.");
+                }
+                return removed;}}
+        
+        System.out.println("Book not found.");
+        return false;}
+
+    /*
+    Method Name: removeBookByTitle
+
+    Purpose:
+    Removes a book from the library by its title.
+
+    Arguments:
+    title: A String representing the title of the book to remove.
+
+    Return Value:
+    true if the book is successfully removed; false otherwise.
+    */
+    public boolean removeBookByTitle(String title) {
+        for (Book book : availableBooks) {
+            if (book.getTitle().equalsIgnoreCase(title)) {
+                boolean removed = availableBooks.remove(book);
+                if (removed) {
+                    saveBooks();
+                    System.out.println("Book \"" + title + "\" removed from the library.");
+                } else {
+                    System.out.println("Failed to remove book \"" + title + "\" from the library.");
+                }
+                return removed;}}
+        
+        System.out.println("Book \"" + title + "\" not found.");
+        return false;}
+
+    /*
+    Method Name: checkoutBookByTitle
+
+    Purpose:
+    Checks out a book from the library by its title.
+
+    Arguments:
+    title: A String representing the title of the book to check out.
+
+    Return Value:
+    true if the book is successfully checked out; false otherwise.
+    */
+
+    public boolean checkoutBookByTitle(String title) {
+        for (Book book : availableBooks) {
+            if (book.getTitle().equalsIgnoreCase(title)) {
+                if (unavailableBooks.contains(book)) {
+                    System.out.println("Book \"" + title + "\" is already checked out.");
+                    return false;
+                }
+                unavailableBooks.add(book);
+                availableBooks.remove(book);
+                saveBooks();
+                System.out.println("Book \"" + title + "\" checked out successfully.");
+                return true;}}
+        
+        System.out.println("Book \"" + title + "\" not found or already checked out.");
+        return false;}
+
+    /*
+    Method Name: checkinBookByTitle
+
+    Purpose:
+    Checks in a book to the library by its title.
+
+    Arguments:
+    title: A String representing the title of the book to check in.
+
+    Return Value:
+    true if the book is successfully checked in; false otherwise.
+    */
+
+    public boolean checkinBookByTitle(String title) {
+        for (Book book : unavailableBooks) {
+            if (book.getTitle().equalsIgnoreCase(title)) {
+                availableBooks.add(book);
+                unavailableBooks.remove(book);
+                saveBooks();
+                System.out.println("Book \"" + title + "\" checked in successfully.");
+                return true;}}
+        
+        System.out.println("Book \"" + title + "\" not found or already checked in.");
+        return false;}
+
+    /*
+    Method Name: displayBooks
+
+    Purpose:
+    Displays the list of books.
+
+    Arguments:
+    books: A List of Book objects to display.
+    */
+
+    public void displayBooks(List<Book> books) {
+        if (books.isEmpty()) {
+            System.out.println("No books found.");
+            return;
+        }
+
+        System.out.println("\nBarcode | Title                          | Author           | Status     | Due Date   |");
+        System.out.println("--------------------------------------------------------------------------------------------");
+        for (Book book : books) {
+            System.out.println(book);
+        }
+        System.out.println();}
+
+    /*
+    Method Name: getAvailableBooksAsString
+
+    Purpose:
+    Gets a string representation of available books.
+
+    Return Value:
+    A String representing the available books.
+    */
+
+    public String getAvailableBooksAsString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("Available Books:\n");
+        for (Book book : availableBooks) {
+            stringBuilder.append(book.toString()).append("\n");
+        }
+        return stringBuilder.toString();}
+
+    /*
+    Method Name: getUnavailableBooksAsString
+
+    Purpose:
+    Gets a string representation of unavailable books.
+
+    Return Value:
+    A String representing the unavailable books.
+    */
+
+    public String getUnavailableBooksAsString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("Unavailable Books:\n");
+        for (Book book : unavailableBooks) {
+            stringBuilder.append(book.toString()).append("\n");
+        }
+        return stringBuilder.toString();}
+
+    /*
+    Method Name: displayAlert
+
+    Purpose:
+    Displays an alert dialog with the specified title and message.
+
+    Arguments:
+    title: A String representing the title of the alert dialog.
+    message: A String representing the message to display in the alert dialog.
+    */
+    // Implements alert display
+    private void displayAlert(String title, String message) {}} 
