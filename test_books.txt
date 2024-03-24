@@ -1,0 +1,24 @@
+The Catcher in the Rye,J.D. Salinger,1,Available,N/A
+To Kill a Mockingbird,Harper Lee,2,Available,N/A
+1984,George Orwell,2,Unavailable,2024-04-01
+The Great Gatsby,F. Scott Fitzgerald,3,Available,N/A
+Moby-Dick,Herman Melville,4,Unavailable,2024-04-01
+The Lord of the Rings,J.R.R. Tolkien,5,Available,N/A
+The Hobbit,J.R.R. Tolkien,6,Unavailable,2024-04-01
+Pride and Prejudice,Jane Austen,7,Available,N/A
+To the Lighthouse,Virginia Woolf,8,Unavailable,2024-04-01
+Animal Farm,George Orwell,9,Available,N/A
+Brave New World,Aldous Huxley,10,Unavailable,2024-04-01
+The Grapes of Wrath,John Steinbeck,11,Available,N/A
+Crime and Punishment,Fyodor Dostoevsky,12,Unavailable,2024-04-01
+Don Quixote,Miguel de Cervantes,13,Available,N/A
+War and Peace,Leo Tolstoy,14,Unavailable,2024-04-01
+Frankenstein,Mary Shelley,15,Available,N/A
+Jane Eyre,Charlotte Bronte,16,Unavailable,2024-04-01
+The Odyssey,Homer,17,Available,N/A
+The Brothers Karamazov,Fyodor Dostoevsky,18,Unavailable,2024-04-01
+Wuthering Heights,Emily Bronte,19,Available,N/A
+
+
+
+
